@@ -1,6 +1,5 @@
 package com.ulearning.video.editor.service.impl;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import com.ulearning.video.common.exception.DataInconsistentException;
@@ -21,9 +20,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
