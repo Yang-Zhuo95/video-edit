@@ -97,4 +97,8 @@ public class FfmPegCache {
         return FILE_CACHE.get(key);
     }
 
+    public static boolean containsFileKey(Object key) {
+        return FILE_CACHE.containsKey(key);
+    }
+
 }

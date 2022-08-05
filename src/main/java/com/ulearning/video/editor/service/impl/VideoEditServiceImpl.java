@@ -2,6 +2,7 @@ package com.ulearning.video.editor.service.impl;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
+import com.ulearning.video.common.exception.CustomizeException;
 import com.ulearning.video.common.exception.DataInconsistentException;
 import com.ulearning.video.editor.fo.CatchPictureFo;
 import com.ulearning.video.ffmpeg.actuator.MultipleMergeActuator;
@@ -23,6 +24,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
@@ -105,13 +107,14 @@ public class VideoEditServiceImpl implements VideoEditService {
         Long duration = catchPictureFo.getDuration();
         duration = Objects.nonNull(duration) && duration.compareTo(0L) >= 0 ? duration : 1;
         File tempFile = FfmPegCache.getFile(catchPictureFo);
-        Integer result;
-        if (Objects.isNull(tempFile)) {
+        boolean flag = FfmPegCache.containsFileKey(catchPictureFo);
+        Integer result = 1;
+        if (!flag) {
             tempFile = new File(FfmPegConfig.WORK_SPACE + System.currentTimeMillis() + "-" + IdUtil.simpleUUID() + ".png");
             tempFile.deleteOnExit();
             result = FfmpegUtil.catchJpg(catchPictureFo.getSource(), tempFile.getAbsolutePath(),
                     duration.toString(), catchPictureFo.getWidth(), catchPictureFo.getHeight());
-        } else {
+        } else if (Objects.nonNull(tempFile)) {
             result = 0;
         }
         if (FfmpegUtil.CODE_SUCCESS.equals(result)) {
@@ -122,6 +125,9 @@ public class VideoEditServiceImpl implements VideoEditService {
                 os = resp.getOutputStream();
                 FfmPegCache.putFile(catchPictureFo, tempFile);
                 IoUtil.copy(in, os);
+            } catch (FileNotFoundException e) {
+                log.error("生成图片异常{}", e.getMessage());
+                FfmPegCache.putFile(catchPictureFo, null);
             } catch (IOException e) {
                 log.error("获取图片异常{}", e.getMessage());
                 // 重置response
@@ -133,7 +139,7 @@ public class VideoEditServiceImpl implements VideoEditService {
                 IoUtil.close(os);
             }
         } else {
-            throw new IllegalArgumentException("图片截取失败");
+            throw new CustomizeException("图片截取失败");
         }
     }
 
