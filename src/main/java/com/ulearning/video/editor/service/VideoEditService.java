@@ -36,6 +36,7 @@ public interface VideoEditService {
      * 抓取图片并返回
      * @param catchPictureFo 抓取图片表单类
      * @param resp           响应体
+     * @throws IOException io异常
      * @date 2022/8/5 11:46
      * @author yangzhuo
      */
