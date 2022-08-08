@@ -34,13 +34,8 @@ import java.util.Objects;
 @RequestMapping("editor")
 public class EditorController {
 
-    private VideoEditService videoEditService;
-
     @Resource
-    public void setVideoEditService(VideoEditService videoEditService) {
-        this.videoEditService = videoEditService;
-    }
-
+    private VideoEditService videoEditService;
 
     @ApiOperation("视频合成(多宫格拼接)")
     @PostMapping("multipleMerge")
@@ -48,13 +43,13 @@ public class EditorController {
         return R.success(videoEditService.multipleMerge(multipleMergeFo));
     }
 
-    @ApiOperation("获取视频指定时间的图片(同步执行)")
+    @ApiOperation("获取视频指定时间的图片(合并请求, 同步执行)")
     @PostMapping("catchPicture")
     public void catchPicture(@RequestBody CatchPictureFo catchPictureFo, HttpServletResponse resp) throws IOException {
         videoEditService.catchPicture(catchPictureFo, resp);
     }
 
-    @ApiOperation("获取视频指定时间的图片(同步执行)")
+    @ApiOperation("获取视频指定时间的图片(合并请求, 同步执行)")
     @GetMapping("catchPicture")
     public void catchPicture(@ApiParam(value = "视频源地址", required = true) @RequestParam("source") String source,
                              @ApiParam(value = "截取的时间点") @RequestParam(value = "duration", defaultValue = "0") Long duration,

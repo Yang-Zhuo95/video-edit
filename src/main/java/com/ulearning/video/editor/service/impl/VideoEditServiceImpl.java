@@ -5,6 +5,8 @@ import cn.hutool.core.util.IdUtil;
 import com.ulearning.video.common.exception.CustomizeException;
 import com.ulearning.video.common.exception.DataInconsistentException;
 import com.ulearning.video.editor.fo.CatchPictureFo;
+import com.ulearning.video.ffmpeg.actuator.Actuator;
+import com.ulearning.video.ffmpeg.actuator.CatchPictureActuator;
 import com.ulearning.video.ffmpeg.actuator.MultipleMergeActuator;
 import com.ulearning.video.ffmpeg.cache.FfmPegCache;
 import com.ulearning.video.ffmpeg.config.FfmPegConfig;
@@ -14,6 +16,7 @@ import com.ulearning.video.editor.service.VideoEditService;
 import com.ulearning.video.ffmpeg.entity.ProgressInfo;
 import com.ulearning.video.ffmpeg.entity.TaskInfo;
 import com.ulearning.video.ffmpeg.executor.FfmPegExecutor;
+import com.ulearning.video.ffmpeg.executor.FfmPegMergeExecutor;
 import com.ulearning.video.ffmpeg.model.VideoEditRecordModel;
 import com.ulearning.video.ffmpeg.util.FfmpegUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +41,8 @@ import java.util.Objects;
 @Service
 public class VideoEditServiceImpl implements VideoEditService {
 
-    private VideoEditRecordDao videoEditRecordDao;
-
     @Resource
-    public void setVideoEditRecordDao(VideoEditRecordDao videoEditRecordDao) {
-        this.videoEditRecordDao = videoEditRecordDao;
-    }
+    private VideoEditRecordDao videoEditRecordDao;
 
     @Override
     public TaskInfo multipleMerge(MultipleMergeFo multipleMergeFo) {
@@ -105,15 +104,15 @@ public class VideoEditServiceImpl implements VideoEditService {
     @Override
     public void catchPicture(CatchPictureFo catchPictureFo, HttpServletResponse resp) throws IOException {
         Long duration = catchPictureFo.getDuration();
-        duration = Objects.nonNull(duration) && duration.compareTo(0L) >= 0 ? duration : 1;
-        File tempFile = FfmPegCache.getFile(catchPictureFo);
+        catchPictureFo.setDuration(Objects.nonNull(duration) && duration.compareTo(0L) >= 0 ? duration : 1);
         boolean flag = FfmPegCache.containsFileKey(catchPictureFo);
+        File tempFile = FfmPegCache.getFile(catchPictureFo);
         Integer result = 1;
         if (!flag) {
-            tempFile = new File(FfmPegConfig.WORK_SPACE + System.currentTimeMillis() + "-" + IdUtil.simpleUUID() + ".png");
-            tempFile.deleteOnExit();
-            result = FfmpegUtil.catchJpg(catchPictureFo.getSource(), tempFile.getAbsolutePath(),
-                    duration.toString(), catchPictureFo.getWidth(), catchPictureFo.getHeight());
+            // 合并请求并延迟返回,减少并发请求导致重复执行命令
+            Actuator actuator = new CatchPictureActuator(catchPictureFo);
+            result = FfmPegMergeExecutor.execute(actuator);
+            tempFile = actuator.getOutputFile();
         } else if (Objects.nonNull(tempFile)) {
             result = 0;
         }

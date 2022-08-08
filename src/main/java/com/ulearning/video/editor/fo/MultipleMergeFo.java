@@ -4,6 +4,7 @@ import com.ulearning.video.ffmpeg.entity.VideoInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
  */
 @Data
 @ToString
+@EqualsAndHashCode
 @ApiModel("视频合成表单类")
 public class MultipleMergeFo {
     @ApiModelProperty("编辑后的视频宽度")
