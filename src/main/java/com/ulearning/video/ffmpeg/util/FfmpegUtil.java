@@ -402,7 +402,7 @@ public class FfmpegUtil {
      * @param height 高度
      * @return 0-成功 1-失败
      */
-    public static Integer catchJpg(String source, String target, String time, Integer width, Integer height) {
+    public static Integer catchPicture(String source, String target, String time, Integer width, Integer height) {
         checkVideoFilePath(source);
         checkFileSource(target);
         checkTime(time);

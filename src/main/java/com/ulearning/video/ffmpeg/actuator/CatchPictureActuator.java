@@ -38,7 +38,7 @@ public class CatchPictureActuator extends BaseActuator {
         }
         file = new File(FfmPegConfig.WORK_SPACE + System.currentTimeMillis() + "-" + IdUtil.simpleUUID() + ".png");
         file.deleteOnExit();
-        Integer result = FfmpegUtil.catchJpg(catchPictureFo.getSource(), file.getAbsolutePath(),
+        Integer result = FfmpegUtil.catchPicture(catchPictureFo.getSource(), file.getAbsolutePath(),
                 catchPictureFo.getDuration().toString(), catchPictureFo.getWidth(), catchPictureFo.getHeight());
         if (file.exists()) {
             FfmPegCache.putFile(catchPictureFo, file);
