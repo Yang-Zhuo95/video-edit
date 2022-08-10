@@ -55,7 +55,6 @@ public class VideoEditServiceImpl implements VideoEditService {
 
         // 查询缓存中的任务信息
         TaskInfo taskInfo = FfmPegCache.getTaskInfo(taskId);
-
         // 不存在缓存就去mysql中查询任务信息
         if (Objects.isNull(taskInfo)) {
             VideoEditRecordModel info = videoEditRecordDao.findById(taskId);
