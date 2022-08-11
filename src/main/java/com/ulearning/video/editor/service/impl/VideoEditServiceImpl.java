@@ -114,40 +114,43 @@ public class VideoEditServiceImpl implements VideoEditService {
         } else if (Objects.nonNull(tempFile) && tempFile.exists()) {
             result = 0;
         }
-
         if (FfmpegUtil.CODE_SUCCESS.equals(result)) {
-            FileChannel sourceChannel = null;
-            WritableByteChannel respChannel = null;
-            try (RandomAccessFile sourceFile = new RandomAccessFile(tempFile, "r")) {
-                //读取图片
-                resp.setContentType("image/png");
-                sourceChannel = sourceFile.getChannel();
-                respChannel = Channels.newChannel(resp.getOutputStream());
-                // 一般图片大小不会超过2.5GB
-                sourceChannel.transferTo(sourceChannel.position(), sourceChannel.size(), respChannel);
-            } catch (IOException e) {
-                String msg;
-                if (e instanceof FileNotFoundException) {
-                    msg = "生成图片异常";
-                } else {
-                    msg = "获取图片异常";
-                }
-                log.error(msg + "{}", e.getMessage());
-                // 重置response
-                resp.reset();
-                resp.setContentType("application/json");
-                resp.setCharacterEncoding("utf-8");
-                throw new DataInconsistentException(msg);
-            } finally {
-                if (Objects.nonNull(respChannel)) {
-                    respChannel.close();
-                }
-                if (Objects.nonNull(sourceChannel)) {
-                    sourceChannel.close();
-                }
-            }
+            this.writeImageToResponse(tempFile, resp);
         } else {
             throw new CustomizeException("图片截取失败");
+        }
+    }
+
+    private void writeImageToResponse(File file, HttpServletResponse resp) throws IOException {
+        FileChannel sourceChannel = null;
+        WritableByteChannel respChannel = null;
+        try (RandomAccessFile sourceFile = new RandomAccessFile(file, "r")) {
+            //读取图片
+            resp.setContentType("image/png");
+            sourceChannel = sourceFile.getChannel();
+            respChannel = Channels.newChannel(resp.getOutputStream());
+            // 一般图片大小不会超过2.5GB
+            sourceChannel.transferTo(sourceChannel.position(), sourceChannel.size(), respChannel);
+        } catch (IOException e) {
+            String msg;
+            if (e instanceof FileNotFoundException) {
+                msg = "生成图片异常";
+            } else {
+                msg = "获取图片异常";
+            }
+            log.error(msg + "{}", e.getMessage());
+            // 重置response
+            resp.reset();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("utf-8");
+            throw new DataInconsistentException(msg);
+        } finally {
+            if (Objects.nonNull(respChannel)) {
+                respChannel.close();
+            }
+            if (Objects.nonNull(sourceChannel)) {
+                sourceChannel.close();
+            }
         }
     }
 
