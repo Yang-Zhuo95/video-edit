@@ -1,7 +1,7 @@
 package com.ulearning.video.editor.service.impl;
 
+import com.ulearning.video.common.enums.ContentTypeEnum;
 import com.ulearning.video.common.exception.CustomizeException;
-import com.ulearning.video.common.exception.DataInconsistentException;
 import com.ulearning.video.editor.fo.CatchPictureFo;
 import com.ulearning.video.ffmpeg.actuator.Actuator;
 import com.ulearning.video.ffmpeg.actuator.CatchPictureActuator;
@@ -16,6 +16,7 @@ import com.ulearning.video.ffmpeg.executor.FfmPegExecutor;
 import com.ulearning.video.ffmpeg.executor.FfmPegMergeExecutor;
 import com.ulearning.video.ffmpeg.model.VideoEditRecordModel;
 import com.ulearning.video.ffmpeg.util.FfmpegUtil;
+import com.ulearning.video.common.utils.ResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.stereotype.Service;
@@ -23,12 +24,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.Objects;
 
 /**
@@ -115,42 +111,9 @@ public class VideoEditServiceImpl implements VideoEditService {
             result = 0;
         }
         if (FfmpegUtil.CODE_SUCCESS.equals(result)) {
-            this.writeImageToResponse(tempFile, resp);
+            ResponseUtil.writeFileToResponse(tempFile, ContentTypeEnum.getContentTypeByFile(tempFile),resp);
         } else {
             throw new CustomizeException("图片截取失败");
-        }
-    }
-
-    private void writeImageToResponse(File file, HttpServletResponse resp) throws IOException {
-        FileChannel sourceChannel = null;
-        WritableByteChannel respChannel = null;
-        try (RandomAccessFile sourceFile = new RandomAccessFile(file, "r")) {
-            //读取图片
-            resp.setContentType("image/png");
-            sourceChannel = sourceFile.getChannel();
-            respChannel = Channels.newChannel(resp.getOutputStream());
-            // 一般图片大小不会超过2.5GB
-            sourceChannel.transferTo(sourceChannel.position(), sourceChannel.size(), respChannel);
-        } catch (IOException e) {
-            String msg;
-            if (e instanceof FileNotFoundException) {
-                msg = "生成图片异常";
-            } else {
-                msg = "获取图片异常";
-            }
-            log.error(msg + "{}", e.getMessage());
-            // 重置response
-            resp.reset();
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("utf-8");
-            throw new DataInconsistentException(msg);
-        } finally {
-            if (Objects.nonNull(respChannel)) {
-                respChannel.close();
-            }
-            if (Objects.nonNull(sourceChannel)) {
-                sourceChannel.close();
-            }
         }
     }
 
