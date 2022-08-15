@@ -1,6 +1,7 @@
 package com.ulearning.video.ffmpeg.executor;
 
 import com.ulearning.video.ffmpeg.actuator.Actuator;
+import com.ulearning.video.ffmpeg.config.FfmPegMergeConfig;
 import com.ulearning.video.ffmpeg.task.FutureModel;
 import com.ulearning.video.ffmpeg.util.FfmpegUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +47,8 @@ public class FfmPegMergeExecutor {
 
     @PostConstruct
     public void init() {
-        BOSS_EXECUTOR.scheduleAtFixedRate(getRunnable(100), 0L, 200, TimeUnit.MILLISECONDS);
-    }
+        BOSS_EXECUTOR.scheduleAtFixedRate(getRunnable(FfmPegMergeConfig.MAX_TASK_SIZE), 0L,
+                FfmPegMergeConfig.PERIOD, TimeUnit.MILLISECONDS);    }
 
     private Runnable getRunnable(int maxRequestSize) {
         return () -> {

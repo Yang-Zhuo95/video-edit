@@ -69,4 +69,15 @@ public class EditorController {
         }
         return R.success(progress);
     }
+
+    @ApiOperation("取消未开始执行的编辑任务")
+    @GetMapping("cancelTask/{taskId}")
+    public R<Void> cancelTask(@ApiParam(value = "任务id", required = true) @PathVariable("taskId") Integer taskId) {
+        boolean flag = videoEditService.cancelTask(taskId);
+        if (flag) {
+            return R.success();
+        }
+        return R.fail();
+    }
+
 }

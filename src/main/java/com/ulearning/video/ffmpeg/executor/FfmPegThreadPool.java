@@ -2,6 +2,7 @@ package com.ulearning.video.ffmpeg.executor;
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
 import com.ulearning.video.ffmpeg.config.FfmPegConfig;
+import com.ulearning.video.ffmpeg.config.FfmPegMergeConfig;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 
 import java.util.concurrent.ExecutorService;
@@ -60,8 +61,8 @@ public class FfmPegThreadPool {
             // 请求合并work线程池
             CustomizableThreadFactory ffmPegMergeWork = new CustomizableThreadFactory("ffmPeg-merge-workThreadPool-");
             ffmPegMergeWork.setDaemon(true);
-            MERGE_WORK_EXECUTOR = TtlExecutors.getTtlExecutorService(new ThreadPoolExecutor(FfmPegConfig.CORE_POOL_SIZE, FfmPegConfig.CORE_POOL_SIZE,
-                    0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(FfmPegConfig.QUEUE_CAPACITY),
+            MERGE_WORK_EXECUTOR = TtlExecutors.getTtlExecutorService(new ThreadPoolExecutor(FfmPegMergeConfig.WORK_CORE_POOL_SIZE, FfmPegMergeConfig.WORK_CORE_POOL_SIZE,
+                    0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(FfmPegMergeConfig.WORK_QUEUE_CAPACITY),
                     ffmPegMergeWork, getRejectedExecution(FfmPegConfig.REJECT_POLICY)));
 
         }

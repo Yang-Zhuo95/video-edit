@@ -151,10 +151,6 @@ public class FfmpegUtil {
             //	       errorStream = processWrapper.getErrorStream();
             ffmpegCmd.execute(false, true, cmdStr);
             Integer taskId = FfmPegExecutor.getTaskId();
-            VideoEditRecordDao videoEditRecordDao = ApplicationUtils.getBean(VideoEditRecordDao.class);
-            if (Objects.nonNull(videoEditRecordDao) && Objects.nonNull(taskId)) {
-                videoEditRecordDao.updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STARTED);
-            }
             // BufferedInputStream in = new BufferedInputStream();
             inBr = new BufferedReader(new InputStreamReader(ffmpegCmd.getErrorStream()));
             String lineStr;

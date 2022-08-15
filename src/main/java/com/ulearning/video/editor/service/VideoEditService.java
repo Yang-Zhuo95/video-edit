@@ -41,4 +41,13 @@ public interface VideoEditService {
      * @author yangzhuo
      */
     void catchPicture(CatchPictureFo catchPictureFo, HttpServletResponse resp) throws IOException;
+
+    /**
+     * 取消未开始执行的任务
+     * @param taskId 任务id
+     * @return boolean 取消成功与否
+     * @date 2022/7/29 11:16
+     * @author yangzhuo
+     */
+    boolean cancelTask(Integer taskId);
 }

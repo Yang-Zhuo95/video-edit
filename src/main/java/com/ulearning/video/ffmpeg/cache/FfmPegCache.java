@@ -1,7 +1,9 @@
 package com.ulearning.video.ffmpeg.cache;
 
 import cn.hutool.cache.Cache;
+import cn.hutool.cache.CacheListener;
 import cn.hutool.cache.impl.LRUCache;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.ulearning.video.ffmpeg.config.FfmPegConfig;
 import com.ulearning.video.ffmpeg.entity.TaskInfo;
@@ -31,9 +33,16 @@ public class FfmPegCache {
     /**
      * 文件缓存
      */
-    private static final Cache<Object, File> FILE_CACHE = new LRUCache<>(FfmPegConfig.CACHE_CAPACITY);
+    private static final Cache<Object, File> FILE_CACHE;
 
     private static final Long DEFAULT_TIMEOUT = FfmPegConfig.CACHE_TIMEOUT;
+
+    static {
+        FILE_CACHE = new LRUCache<>(FfmPegConfig.CACHE_CAPACITY);
+        FILE_CACHE.setListener((key, file) -> {
+            FileUtil.del(file);
+        });
+    }
 
     public static void putTaskInfo(TaskInfo taskInfo) {
         Integer taskId = taskInfo.getTaskId();
