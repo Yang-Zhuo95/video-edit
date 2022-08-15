@@ -27,7 +27,7 @@ public class ResponseUtil {
      * @date 2022/8/11 11:18
      * @author yangzhuo
      */
-    public static void writeFileToResponse(File file, String contentType, HttpServletResponse resp) throws IOException {
+    public static void writeFileToResponse(File file, String contentType,String charset, HttpServletResponse resp) throws IOException {
         FileChannel sourceChannel = null;
         WritableByteChannel respChannel = null;
         try (RandomAccessFile sourceFile = new RandomAccessFile(file, "r")) {
@@ -48,7 +48,7 @@ public class ResponseUtil {
             // 重置response
             resp.reset();
             resp.setContentType("application/json");
-            resp.setCharacterEncoding("utf-8");
+            resp.setCharacterEncoding(charset);
             throw new DataInconsistentException(msg);
         } finally {
             if (Objects.nonNull(respChannel)) {

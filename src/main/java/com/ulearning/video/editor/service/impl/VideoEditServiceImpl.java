@@ -111,7 +111,7 @@ public class VideoEditServiceImpl implements VideoEditService {
             result = 0;
         }
         if (FfmpegUtil.CODE_SUCCESS.equals(result)) {
-            ResponseUtil.writeFileToResponse(tempFile, ContentTypeEnum.getContentTypeByFile(tempFile),resp);
+            ResponseUtil.writeFileToResponse(tempFile, ContentTypeEnum.getContentTypeByFile(tempFile), "utf-8",resp);
         } else {
             throw new CustomizeException("图片截取失败");
         }
