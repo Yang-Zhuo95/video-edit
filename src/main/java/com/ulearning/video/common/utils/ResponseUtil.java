@@ -20,6 +20,11 @@ import java.util.Objects;
  */
 @Slf4j
 public class ResponseUtil {
+
+    private ResponseUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * 向http响应写文件
      * @param file 文件

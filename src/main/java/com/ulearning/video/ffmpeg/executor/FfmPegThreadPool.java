@@ -19,6 +19,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class FfmPegThreadPool {
 
+    private FfmPegThreadPool() {
+        throw new IllegalStateException("Utility class");
+    }
+
     private static class HolderClass{
         /**
          * ffmPeg线程池
