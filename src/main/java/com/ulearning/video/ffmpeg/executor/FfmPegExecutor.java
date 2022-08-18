@@ -386,7 +386,7 @@ public class FfmPegExecutor {
         } else if (VideoEditRecordModel.STOPPED.equals(result)) {
             // 手动停止
             log.info("ffmPeg手动停止| taskId {}", taskId);
-            updateRecord(VideoEditRecordModel.stopped(taskId, "手动停止"));
+            updateRecord(VideoEditRecordModel.stopped(taskId, "manual stop"));
             new File(getPath()).delete();
         } else {
             // 失败处理
