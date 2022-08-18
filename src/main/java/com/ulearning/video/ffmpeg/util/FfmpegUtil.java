@@ -850,7 +850,7 @@ public class FfmpegUtil {
         cmdBuilder.append(" -y");
         for (VideoInfo inputInfo : inputInfos) {
             if (inputInfo.getDuration() != 0L) {
-                cmdBuilder.append(" -i ").append(inputInfo.getSource()).append("  ");
+                cmdBuilder.append(String.format(" -ss 0 -to %s -i ", (double) inputInfo.getDuration() / 1000)).append(inputInfo.getSource()).append("  ");
             }
         }
 
