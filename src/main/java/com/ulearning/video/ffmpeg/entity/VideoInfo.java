@@ -55,4 +55,10 @@ public class VideoInfo {
      */
     @ApiModelProperty("视频源")
     private String source;
+
+    public static VideoInfo emptyInfo() {
+        VideoInfo videoInfo = new VideoInfo();
+        videoInfo.setDuration(0L);
+        return videoInfo;
+    }
 }
