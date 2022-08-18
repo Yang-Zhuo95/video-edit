@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -68,6 +70,20 @@ public class EditorController {
             return R.error("任务信息不存在");
         }
         return R.success(progress);
+    }
+
+    @ApiOperation("批量查询任务执行进度")
+    @PostMapping("executeProgress")
+    public R<List<ProgressInfo>> getExecuteProgressList(
+            @ApiParam(value = "任务id", required = true) @RequestBody List<Integer> taskIds) {
+        List<ProgressInfo> progressList = new ArrayList<>();
+        for (Integer taskId : taskIds) {
+            ProgressInfo progress = videoEditService.getExecuteProgress(taskId);
+            if (Objects.nonNull(progress)) {
+                progressList.add(progress);
+            }
+        }
+        return R.success(progressList);
     }
 
     @ApiOperation("取消未开始执行的编辑任务")
