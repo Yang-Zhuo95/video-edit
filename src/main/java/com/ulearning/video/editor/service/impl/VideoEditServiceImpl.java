@@ -119,7 +119,11 @@ public class VideoEditServiceImpl implements VideoEditService {
 
     @Override
     public boolean cancelTask(Integer taskId) {
-        return videoEditRecordDao.updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STOPPED) == 1;
+        if (videoEditRecordDao.updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STOPPED) == 1) {
+            FfmPegCache.removeTaskInfo(taskId);
+            return true;
+        }
+        return false;
     }
 
 }
