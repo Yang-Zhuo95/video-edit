@@ -806,7 +806,7 @@ public class FfmpegUtil {
         // 读取视频信息
         List<VideoInfo> inputInfos = new ArrayList<>();
         for (VideoInfo input : inputs) {
-            if (input.getDuration() != 0L) {
+            if (Objects.isNull(input.getDuration()) || input.getDuration() != 0L) {
                 checkVideoFilePath(input.getSource());
                 inputInfos.add(getVideoInfo(input.getSource()));
             } else {
@@ -818,6 +818,9 @@ public class FfmpegUtil {
         for (int i = 0; i < inputs.size(); i++) {
             VideoInfo info = inputs.get(i);
             VideoInfo inputInfo = inputInfos.get(i);
+            if (Objects.nonNull(info.getDuration())) {
+                inputInfo.setDuration(info.getDuration());
+            }
             inputInfo.setWidth(info.getWidth());
             inputInfo.setHeight(info.getHeight());
             inputInfo.setX(info.getX());
