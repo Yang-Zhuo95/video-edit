@@ -48,7 +48,8 @@ public class FfmPegMergeExecutor {
     @PostConstruct
     public void init() {
         BOSS_EXECUTOR.scheduleAtFixedRate(getRunnable(FfmPegMergeConfig.MAX_TASK_SIZE), 0L,
-                FfmPegMergeConfig.PERIOD, TimeUnit.MILLISECONDS);    }
+                FfmPegMergeConfig.PERIOD, TimeUnit.MILLISECONDS);
+    }
 
     private Runnable getRunnable(int maxRequestSize) {
         return () -> {
