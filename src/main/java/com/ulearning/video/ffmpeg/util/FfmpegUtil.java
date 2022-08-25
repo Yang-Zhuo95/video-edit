@@ -151,10 +151,6 @@ public class FfmpegUtil {
             //	       errorStream = processWrapper.getErrorStream();
             ffmpegCmd.execute(false, true, cmdStr);
             Integer taskId = FfmPegExecutor.getTaskId();
-            VideoEditRecordDao videoEditRecordDao = ApplicationUtils.getBean(VideoEditRecordDao.class);
-            if (Objects.nonNull(videoEditRecordDao) && Objects.nonNull(taskId)) {
-                videoEditRecordDao.updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STARTED);
-            }
             // BufferedInputStream in = new BufferedInputStream();
             inBr = new BufferedReader(new InputStreamReader(ffmpegCmd.getErrorStream()));
             String lineStr;
@@ -402,7 +398,7 @@ public class FfmpegUtil {
      * @param height 高度
      * @return 0-成功 1-失败
      */
-    public static Integer catchJpg(String source, String target, String time, Integer width, Integer height) {
+    public static Integer catchPicture(String source, String target, String time, Integer width, Integer height) {
         checkVideoFilePath(source);
         checkFileSource(target);
         checkTime(time);
@@ -810,34 +806,26 @@ public class FfmpegUtil {
         // 读取视频信息
         List<VideoInfo> inputInfos = new ArrayList<>();
         for (VideoInfo input : inputs) {
-            checkVideoFilePath(input.getSource());
-            inputInfos.add(getVideoInfo(input.getSource()));
+            if (Objects.isNull(input.getDuration()) || input.getDuration() != 0L) {
+                checkVideoFilePath(input.getSource());
+                inputInfos.add(getVideoInfo(input.getSource()));
+            } else {
+                inputInfos.add(VideoInfo.emptyInfo());
+            }
         }
 
         // 设置合适的窗体大小和位置 TODO(现在根据入参设置, 不支持自动调整)
         for (int i = 0; i < inputs.size(); i++) {
             VideoInfo info = inputs.get(i);
             VideoInfo inputInfo = inputInfos.get(i);
+            if (Objects.nonNull(info.getDuration())) {
+                inputInfo.setDuration(info.getDuration());
+            }
             inputInfo.setWidth(info.getWidth());
             inputInfo.setHeight(info.getHeight());
             inputInfo.setX(info.getX());
             inputInfo.setY(info.getY());
         }
-
-        // cmdBulider
-        StringBuilder cmdBuilder = new StringBuilder();
-
-        // 构建输入源
-        cmdBuilder.append(" -y");
-        for (VideoInfo inputInfo : inputInfos) {
-            cmdBuilder.append(" -i ").append(inputInfo.getSource()).append("  ");
-        }
-
-        // 构建过滤器
-        cmdBuilder.append(" -filter_complex ");
-        // 设置基础窗体
-        cmdBuilder.append(String.format("\"nullsrc=size=%sx%s [tmp0]; ", baseWidth, baseHeight));
-        // cmdBuilder.append(String.format("\"color=color=Black:size=%sx%s [tmp0]; ", baseWidth, baseHeight));
 
         // 视频时长是否一致
         boolean differentDuration = isDifferentDuration(inputInfos);
@@ -853,13 +841,37 @@ public class FfmpegUtil {
             maxDuration = inputInfos.get(0).getDuration();
         }
 
+        // 最长时长是0,说明是无效任务
+        if (maxDuration == 0L) {
+            throw new DataInconsistentException("拼接任务所有视频时长均为0");
+        }
+
+        // cmdBulider
+        StringBuilder cmdBuilder = new StringBuilder();
+
+        // 构建输入源
+        cmdBuilder.append(" -y");
+        for (VideoInfo inputInfo : inputInfos) {
+            if (inputInfo.getDuration() != 0L) {
+                cmdBuilder.append(String.format(" -ss 0 -to %s -i ", (double) inputInfo.getDuration() / 1000)).append(inputInfo.getSource()).append("  ");
+            }
+        }
+
+        // 构建过滤器
+        cmdBuilder.append(" -filter_complex ");
+        // 设置基础窗体
+        cmdBuilder.append(String.format("\"nullsrc=size=%sx%s [tmp0]; ", baseWidth, baseHeight));
+        // cmdBuilder.append(String.format("\"color=color=Black:size=%sx%s [tmp0]; ", baseWidth, baseHeight));
+
         for (int i = 0; i < inputInfos.size(); i++) {
             VideoInfo info = inputInfos.get(i);
             // 设置宫格窗体
-            cmdBuilder.append(
-                    String.format("[%s:v] setpts=PTS-STARTPTS, scale=%s:%s:force_original_aspect_ratio=decrease,pad=%s:%s:(ow-iw)/2:(oh-ih)/2,setsar=1 [v%s]; ",
-                            i, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight(), i)
-            );
+            if (info.getDuration() != 0L) {
+                cmdBuilder.append(
+                        String.format("[%s:v] setpts=PTS-STARTPTS, scale=%s:%s:force_original_aspect_ratio=decrease,pad=%s:%s:(ow-iw)/2:(oh-ih)/2,setsar=1 [v%s]; ",
+                                i, info.getWidth(), info.getHeight(), info.getWidth(), info.getHeight(), i)
+                );
+            }
 
             // 视频长度不一致时,自动填充
             if (differentDuration && maxDuration.compareTo(info.getDuration()) > 0) {
@@ -883,10 +895,16 @@ public class FfmpegUtil {
                         String.format("drawbox=drawbox:x=%s:y=%s:w=%s:h=%s:c=%s",
                                 0, 0, info.getWidth(), info.getHeight(), "White")
                 );
-                // 背景变量名
-                cmdBuilder.append(String.format(" [bg%s]; ", i));
-                // 合并视频源 (拼接,先进先出)
-                cmdBuilder.append(String.format("[v%s][bg%s] concat,fifo [v%s]; ", i, i, i));
+                if (info.getDuration() != 0L) {
+                    // 背景变量名
+                    cmdBuilder.append(String.format(" [bg%s]; ", i));
+                    // 合并视频源 (拼接,先进先出)
+                    cmdBuilder.append(String.format("[v%s][bg%s] concat,fifo [v%s]; ", i, i, i));
+                } else {
+                    // 背景变量名
+                    cmdBuilder.append(String.format(" [v%s]; ", i));
+                }
+
             }
 
             // 设置偏移和输出

@@ -289,10 +289,14 @@ public class FfmPegExecutor {
         if (taskInfo.getThreadPoolFull()) {
             return taskInfo;
         }
-        recordCmd(cmd);
+        Integer taskId = recordCmd(cmd);
         // 执行ffmpeg命令
-        CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> FfmpegUtil.cmdExecute(cmd),
-                ttlExecutor);
+        CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> {
+            if (!updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STARTED)) {
+                return VideoEditRecordModel.STOPPED;
+            }
+            return FfmpegUtil.cmdExecute(cmd);
+        }, ttlExecutor);
         // 注册执行回调事件
         future.handle(FfmPegExecutor::callback);
         // 注册额外的回调事件
@@ -330,6 +334,9 @@ public class FfmPegExecutor {
         // 创建ffmpeg命令并执行
         CompletableFuture<Integer> future = CompletableFuture.supplyAsync(
                 () -> {
+                    if (!updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STARTED)) {
+                        return VideoEditRecordModel.STOPPED;
+                    }
                     String cmd = actuator.createCmd();
                     Objects.requireNonNull(cmd, "不能执行空命令");
                     // 更新记录信息
@@ -374,17 +381,20 @@ public class FfmPegExecutor {
 
         if (FfmPegExecutor.SUCCESS.equals(result)) {
             // 成功处理
-            updateRecord(VideoEditRecordModel.success(taskId));
             log.info("ffmPeg执行成功| taskId {}", taskId);
-            // } else if (FfmPegExecutor.ERROR.equals(result)) {
-            return VideoEditRecordModel.SUCCESS;
+            updateRecord(VideoEditRecordModel.success(taskId));
+        } else if (VideoEditRecordModel.STOPPED.equals(result)) {
+            // 手动停止
+            log.info("ffmPeg手动停止| taskId {}", taskId);
+            updateRecord(VideoEditRecordModel.stopped(taskId, "manual stop"));
+            new File(getPath()).delete();
         } else {
             // 失败处理
-            updateRecord(VideoEditRecordModel.error(taskId, msg));
-            new File(getPath()).delete();
             log.error("ffmPeg执行失败| taskId {}| msg {}", taskId, msg);
+            updateRecord(VideoEditRecordModel.fail(taskId, msg));
+            new File(getPath()).delete();
         }
-        return VideoEditRecordModel.FAIL;
+        return result;
     }
 
     /**
@@ -429,6 +439,14 @@ public class FfmPegExecutor {
         if (Objects.nonNull(videoEditRecordDao)) {
             videoEditRecordDao.update(videoEditRecordModel);
         }
+    }
+
+    private static boolean updateStatus(int taskId, int oldStatus, int newStatus) {
+        VideoEditRecordDao videoEditRecordDao = ApplicationUtils.getBean(VideoEditRecordDao.class);
+        if (Objects.nonNull(videoEditRecordDao)) {
+            return videoEditRecordDao.updateStatus(taskId, oldStatus, newStatus) == 1;
+        }
+        return true;
     }
 
     private static void removeCache(Integer taskId) {

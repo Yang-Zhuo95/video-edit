@@ -79,7 +79,7 @@ public class R<T> {
      * @return
      */
     public static <T> R<T> success() {
-        return new R<T>(ReturnStatus.Success.getValue(), "", null);
+        return new R<T>(ReturnStatus.Success.getValue(), ReturnStatus.Success.getName(), null);
     }
 
     /**
@@ -110,6 +110,15 @@ public class R<T> {
      */
     public static <T> R<T> success(T data, String msg) {
         return new R<T>(ReturnStatus.Success.getValue(), msg, data);
+    }
+
+    /**
+     * 失败
+     * @param <T>
+     * @return
+     */
+    public static <T> R<T> fail() {
+        return new R<T>(ReturnStatus.OPERAFAIL.getValue(), ReturnStatus.OPERAFAIL.getName(), null);
     }
 
 }

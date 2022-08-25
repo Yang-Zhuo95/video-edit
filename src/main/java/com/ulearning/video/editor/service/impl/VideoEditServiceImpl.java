@@ -1,33 +1,30 @@
 package com.ulearning.video.editor.service.impl;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.IdUtil;
-import com.ulearning.video.common.exception.DataInconsistentException;
+import com.ulearning.video.common.enums.ContentTypeEnum;
+import com.ulearning.video.common.exception.CustomizeException;
 import com.ulearning.video.editor.fo.CatchPictureFo;
+import com.ulearning.video.ffmpeg.actuator.Actuator;
+import com.ulearning.video.ffmpeg.actuator.CatchPictureActuator;
 import com.ulearning.video.ffmpeg.actuator.MultipleMergeActuator;
 import com.ulearning.video.ffmpeg.cache.FfmPegCache;
-import com.ulearning.video.ffmpeg.config.FfmPegConfig;
 import com.ulearning.video.ffmpeg.dao.VideoEditRecordDao;
 import com.ulearning.video.editor.fo.MultipleMergeFo;
 import com.ulearning.video.editor.service.VideoEditService;
 import com.ulearning.video.ffmpeg.entity.ProgressInfo;
 import com.ulearning.video.ffmpeg.entity.TaskInfo;
 import com.ulearning.video.ffmpeg.executor.FfmPegExecutor;
+import com.ulearning.video.ffmpeg.executor.FfmPegMergeExecutor;
 import com.ulearning.video.ffmpeg.model.VideoEditRecordModel;
 import com.ulearning.video.ffmpeg.util.FfmpegUtil;
+import com.ulearning.video.common.utils.ResponseUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Objects;
 
 /**
@@ -39,12 +36,8 @@ import java.util.Objects;
 @Service
 public class VideoEditServiceImpl implements VideoEditService {
 
-    private VideoEditRecordDao videoEditRecordDao;
-
     @Resource
-    public void setVideoEditRecordDao(VideoEditRecordDao videoEditRecordDao) {
-        this.videoEditRecordDao = videoEditRecordDao;
-    }
+    private VideoEditRecordDao videoEditRecordDao;
 
     @Override
     public TaskInfo multipleMerge(MultipleMergeFo multipleMergeFo) {
@@ -58,7 +51,6 @@ public class VideoEditServiceImpl implements VideoEditService {
 
         // 查询缓存中的任务信息
         TaskInfo taskInfo = FfmPegCache.getTaskInfo(taskId);
-
         // 不存在缓存就去mysql中查询任务信息
         if (Objects.isNull(taskInfo)) {
             VideoEditRecordModel info = videoEditRecordDao.findById(taskId);
@@ -106,38 +98,32 @@ public class VideoEditServiceImpl implements VideoEditService {
     @Override
     public void catchPicture(CatchPictureFo catchPictureFo, HttpServletResponse resp) throws IOException {
         Long duration = catchPictureFo.getDuration();
-        duration = Objects.nonNull(duration) && duration.compareTo(0L) >= 0 ? duration : 1;
+        catchPictureFo.setDuration(Objects.nonNull(duration) && duration.compareTo(0L) >= 0 ? duration : 1);
+        boolean flag = FfmPegCache.containsFileKey(catchPictureFo);
         File tempFile = FfmPegCache.getFile(catchPictureFo);
-        Integer result;
-        if (Objects.isNull(tempFile)) {
-            tempFile = new File(FfmPegConfig.WORK_SPACE + System.currentTimeMillis() + "-" + IdUtil.simpleUUID() + ".png");
-            tempFile.deleteOnExit();
-            result = FfmpegUtil.catchJpg(catchPictureFo.getSource(), tempFile.getAbsolutePath(),
-                    duration.toString(), catchPictureFo.getWidth(), catchPictureFo.getHeight());
-        } else {
+        Integer result = 1;
+        if (!flag) {
+            // 合并请求并延迟返回,减少并发请求导致重复执行命令
+            Actuator actuator = new CatchPictureActuator(catchPictureFo);
+            result = FfmPegMergeExecutor.execute(actuator);
+            tempFile = actuator.getOutputFile();
+        } else if (Objects.nonNull(tempFile) && tempFile.exists()) {
             result = 0;
         }
         if (FfmpegUtil.CODE_SUCCESS.equals(result)) {
-            OutputStream os = null;
-            try (FileInputStream in = new FileInputStream(tempFile)) {
-                //读取图片
-                resp.setContentType("image/png");
-                os = resp.getOutputStream();
-                FfmPegCache.putFile(catchPictureFo, tempFile);
-                IoUtil.copy(in, os);
-            } catch (IOException e) {
-                log.error("获取图片异常{}", e.getMessage());
-                // 重置response
-                resp.reset();
-                resp.setContentType("application/json");
-                resp.setCharacterEncoding("utf-8");
-                throw new DataInconsistentException("获取图片异常");
-            } finally {
-                IoUtil.close(os);
-            }
+            ResponseUtil.writeFileToResponse(tempFile, ContentTypeEnum.getContentTypeByFile(tempFile), "utf-8",resp);
         } else {
-            throw new IllegalArgumentException("图片截取失败");
+            throw new CustomizeException("图片截取失败");
         }
+    }
+
+    @Override
+    public boolean cancelTask(Integer taskId) {
+        if (videoEditRecordDao.updateStatus(taskId, VideoEditRecordModel.NOT_STARTED, VideoEditRecordModel.STOPPED) == 1) {
+            FfmPegCache.removeTaskInfo(taskId);
+            return true;
+        }
+        return false;
     }
 
 }

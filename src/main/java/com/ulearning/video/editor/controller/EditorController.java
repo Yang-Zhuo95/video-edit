@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -34,13 +36,8 @@ import java.util.Objects;
 @RequestMapping("editor")
 public class EditorController {
 
-    private VideoEditService videoEditService;
-
     @Resource
-    public void setVideoEditService(VideoEditService videoEditService) {
-        this.videoEditService = videoEditService;
-    }
-
+    private VideoEditService videoEditService;
 
     @ApiOperation("视频合成(多宫格拼接)")
     @PostMapping("multipleMerge")
@@ -48,13 +45,13 @@ public class EditorController {
         return R.success(videoEditService.multipleMerge(multipleMergeFo));
     }
 
-    @ApiOperation("获取视频指定时间的图片(同步执行)")
+    @ApiOperation("获取视频指定时间的图片(合并请求, 同步执行)")
     @PostMapping("catchPicture")
     public void catchPicture(@RequestBody CatchPictureFo catchPictureFo, HttpServletResponse resp) throws IOException {
         videoEditService.catchPicture(catchPictureFo, resp);
     }
 
-    @ApiOperation("获取视频指定时间的图片(同步执行)")
+    @ApiOperation("获取视频指定时间的图片(合并请求, 同步执行)")
     @GetMapping("catchPicture")
     public void catchPicture(@ApiParam(value = "视频源地址", required = true) @RequestParam("source") String source,
                              @ApiParam(value = "截取的时间点") @RequestParam(value = "duration", defaultValue = "0") Long duration,
@@ -74,4 +71,29 @@ public class EditorController {
         }
         return R.success(progress);
     }
+
+    @ApiOperation("批量查询任务执行进度")
+    @PostMapping("executeProgress")
+    public R<List<ProgressInfo>> getExecuteProgressList(
+            @ApiParam(value = "任务id", required = true) @RequestBody List<Integer> taskIds) {
+        List<ProgressInfo> progressList = new ArrayList<>();
+        for (Integer taskId : taskIds) {
+            ProgressInfo progress = videoEditService.getExecuteProgress(taskId);
+            if (Objects.nonNull(progress)) {
+                progressList.add(progress);
+            }
+        }
+        return R.success(progressList);
+    }
+
+    @ApiOperation("取消未开始执行的编辑任务")
+    @GetMapping("cancelTask/{taskId}")
+    public R<Void> cancelTask(@ApiParam(value = "任务id", required = true) @PathVariable("taskId") Integer taskId) {
+        boolean flag = videoEditService.cancelTask(taskId);
+        if (flag) {
+            return R.success();
+        }
+        return R.fail();
+    }
+
 }

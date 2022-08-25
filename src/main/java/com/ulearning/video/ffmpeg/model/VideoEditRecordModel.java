@@ -47,6 +47,11 @@ public class VideoEditRecordModel {
     public static final Integer ERROR = 4;
 
     /**
+     * 执行状态 - 手动停止
+     */
+    public static final Integer STOPPED = 5;
+
+    /**
      * 主键id
      */
     private Integer id;
@@ -88,8 +93,18 @@ public class VideoEditRecordModel {
     }
 
     public static VideoEditRecordModel success(int id) {
+        return success(id, "success");
+    }
+
+    public static VideoEditRecordModel success(int id, String msg) {
         return VideoEditRecordModel.builder()
-                .id(id).msg("success").status(SUCCESS)
+                .id(id).msg(msg).status(SUCCESS)
+                .build();
+    }
+
+    public static VideoEditRecordModel stopped(int id, String msg) {
+        return VideoEditRecordModel.builder()
+                .id(id).msg(msg).path("").status(STOPPED)
                 .build();
     }
 

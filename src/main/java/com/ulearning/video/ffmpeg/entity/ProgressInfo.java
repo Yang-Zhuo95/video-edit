@@ -26,7 +26,8 @@ public class ProgressInfo {
     private String duration;
     @ApiModelProperty("执行信息")
     private String msg;
-    @ApiModelProperty("执行状态 [0-未开始] , [1-进行中], [2-执行成功], [3-执行失败], [4-执行异常]")
+    @ApiModelProperty("执行状态: " +
+            "[0-未开始] , [1-进行中], [2-执行成功], [3-执行失败], [4-执行异常], [5-手动取消]")
     private Integer status;
     @ApiModelProperty("输出路径")
     private String outputPath;

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 @ControllerAdvice(annotations = Controller.class)
 public class ExceptionHandlerController extends DefaultHandlerExceptionResolver {
@@ -238,7 +239,7 @@ public class ExceptionHandlerController extends DefaultHandlerExceptionResolver 
                 -1 : (Integer) request.getAttribute("userId"));
 //		logService.error(logger, "error_service", message, userId,
 //				Params.create(userId), ex);
-        printResponse(ex.getStatusCode(),
+        printResponse(ex.getStatusCode() != 0 ? ex.getStatusCode() : HttpServletResponse.SC_OK,
                 toJson(ex.getResultCode(), message),
                 response);
     }
