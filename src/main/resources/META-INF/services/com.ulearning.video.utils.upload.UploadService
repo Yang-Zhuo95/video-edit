@@ -1,0 +1,3 @@
+com.ulearning.video.utils.upload.qiniu.QiniuServiceImpl
+com.ulearning.video.utils.upload.huawei.HuaWeiObsServiceImpl
+com.ulearning.video.utils.upload.local.LocalServiceImpl
