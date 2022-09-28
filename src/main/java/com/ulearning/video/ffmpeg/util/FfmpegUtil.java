@@ -10,6 +10,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReUtil;
 import com.ulearning.video.common.exception.DataInconsistentException;
 import com.ulearning.video.ffmpeg.cache.FfmPegCache;
+import com.ulearning.video.ffmpeg.config.FfmPegConfig;
 import com.ulearning.video.ffmpeg.executor.FfmpegCmd;
 import com.ulearning.video.ffmpeg.dao.VideoEditRecordDao;
 import com.ulearning.video.ffmpeg.entity.Period;
@@ -283,16 +284,14 @@ public class FfmpegUtil {
      * @return 0-成功 1-失败
      */
     public static Integer videoToAudio(String videoPath, String audioPath) {
-        checkVideoFilePath(videoPath);
-        checkFileSource(audioPath);
-        File fileMp4 = new File(videoPath);
+        checkAudioFilePath(audioPath);
         File fileMp3 = new File(audioPath);
 
         //Audio Attributes
         AudioAttributes audio = new AudioAttributes();
         audio.setCodec("libmp3lame");
         audio.setBitRate(128000);
-        audio.setChannels(2);
+        audio.setChannels(FfmPegConfig.WORK_THREADS);
         audio.setSamplingRate(44100);
 
         //Encoding attributes 编码属性
@@ -300,7 +299,7 @@ public class FfmpegUtil {
         attrs.setOutputFormat("mp3");
         attrs.setAudioAttributes(audio);
         Encoder encoder = new Encoder();
-        MultimediaObject mediaObject = new MultimediaObject(fileMp4);
+        MultimediaObject mediaObject = getMultimediaObject(videoPath);
         try {
             encoder.encode(mediaObject, fileMp3, attrs);
             log.info("File MP4 convertito in MP3");
@@ -318,75 +317,37 @@ public class FfmpegUtil {
      * @return VideoInfo 视频基本信息
      */
     public static VideoInfo getVideoInfo(String fileSource) {
-        checkFileSource(fileSource);
-        if (ReUtil.isMatch(StringUtil.URL_PATTERN, fileSource)) {
+        VideoInfo videoInfo = null;
+        try {
+            MultimediaObject multimediaObject = getMultimediaObject(fileSource);
+            MultimediaInfo m = multimediaObject.getInfo();
+            videoInfo = VideoInfo.builder()
+                    .source(fileSource)
+                    .width(m.getVideo().getSize().getWidth())
+                    .height(m.getVideo().getSize().getHeight())
+                    .duration(m.getDuration())
+                    .format(m.getFormat())
+                    .build();
+        } catch (Exception e) {
+            FfmPegExecutor.setMsg(e.getMessage());
+            log.error("{} |taskId: {}", e.getMessage(), FfmPegExecutor.getTaskId());
+        }
+        return videoInfo;
+    }
+
+    private static MultimediaObject getMultimediaObject(String source) {
+        if (ReUtil.isMatch(StringUtil.URL_PATTERN, source)) {
             try {
-                return getVideoInfo(new URL(fileSource));
+                return new MultimediaObject(new URL(source));
             } catch (MalformedURLException e) {
                 FfmPegExecutor.setMsg(e.getMessage());
                 log.error("{} |taskId: {}", e.getMessage(), FfmPegExecutor.getTaskId());
                 return null;
             }
         } else {
-            return getVideoInfo(new File(fileSource));
+            checkVideoFilePath(source);
+            return new MultimediaObject(new File(source));
         }
-    }
-
-    public static VideoInfo getVideoInfo(URL source) {
-        VideoInfo videoInfo = null;
-        try {
-            MultimediaObject multimediaObject = new MultimediaObject(source);
-            MultimediaInfo m = multimediaObject.getInfo();
-            videoInfo = VideoInfo.builder()
-                    .source(source.toString())
-                    .width(m.getVideo().getSize().getWidth())
-                    .height(m.getVideo().getSize().getHeight())
-                    .duration(m.getDuration())
-                    .format(m.getFormat())
-                    .build();
-        } catch (Exception e) {
-            FfmPegExecutor.setMsg(e.getMessage());
-            log.error("{} |taskId: {}", e.getMessage(), FfmPegExecutor.getTaskId());
-        }
-        return videoInfo;
-    }
-
-    public static VideoInfo getVideoInfo(File source) {
-        FileInputStream fis = null;
-        FileChannel fc = null;
-        VideoInfo videoInfo = null;
-        try {
-            MultimediaObject multimediaObject = new MultimediaObject(source);
-            MultimediaInfo m = multimediaObject.getInfo();
-            fis = new FileInputStream(source);
-            fc = fis.getChannel();
-            videoInfo = VideoInfo.builder()
-                    .source(source.getAbsolutePath())
-                    .width(m.getVideo().getSize().getWidth())
-                    .height(m.getVideo().getSize().getHeight())
-                    .duration(m.getDuration())
-                    .format(m.getFormat())
-                    .build();
-        } catch (Exception e) {
-            FfmPegExecutor.setMsg(e.getMessage());
-            log.error("{} |taskId: {}", e.getMessage(), FfmPegExecutor.getTaskId());
-        } finally {
-            if (null != fc) {
-                try {
-                    fc.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (null != fis) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return videoInfo;
     }
 
     /**
@@ -782,6 +743,17 @@ public class FfmpegUtil {
             String suffix = VideoSuffixEnum.suffix(substring);
             if (!StringUtils.hasText(suffix)) {
                 throw new DataInconsistentException("不支持该后缀的视频文件");
+            }
+        }
+    }
+
+    // 校验视频格式
+    public static void checkAudioFilePath(String... filePaths) {
+        checkFileSource(filePaths);
+        for (String filePath : filePaths) {
+            String substring = filePath.substring(filePath.lastIndexOf(".") + 1);
+            if (!"mp3".equals(substring)) {
+                throw new DataInconsistentException("不支持该后缀的音频文件");
             }
         }
     }
