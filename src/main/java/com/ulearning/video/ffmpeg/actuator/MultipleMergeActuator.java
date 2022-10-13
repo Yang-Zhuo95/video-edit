@@ -24,7 +24,8 @@ public class MultipleMergeActuator extends BaseActuator {
 
     @Override
     public String createCmd() {
-        return FfmpegUtil.multipleMerge(multipleMergeFo.getVideoInfos(),
+        return FfmpegUtil.multipleMerge(
+                multipleMergeFo.getVideoInfos(), multipleMergeFo.getSubtitlePath(),
                 multipleMergeFo.getBaseWidth(), multipleMergeFo.getBaseHeight(),
                 multipleMergeFo.getAudioIndex(), FfmPegExecutor.getPath()
         );

@@ -4,10 +4,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
 import com.ulearning.video.common.exception.DataInconsistentException;
 import com.ulearning.video.ffmpeg.cache.FfmPegCache;
 import com.ulearning.video.ffmpeg.config.FfmPegConfig;
@@ -761,6 +763,7 @@ public class FfmpegUtil {
     /**
      * 生成多路视频宫格合并命令
      * @param inputs     输入视频信息
+     * @param subtitlePath
      * @param baseWidth  基础宽度
      * @param baseHeight 基础高度
      * @param outputPath 输出路径
@@ -768,7 +771,7 @@ public class FfmpegUtil {
      * @date 2022/7/25 10:34
      * @author yangzhuo
      */
-    public static String multipleMerge(List<VideoInfo> inputs, int baseWidth, int baseHeight, Integer audioIndex, String outputPath) {
+    public static String multipleMerge(List<VideoInfo> inputs, String subtitlePath, int baseWidth, int baseHeight, Integer audioIndex, String outputPath) {
         // 基本参数校验
         checkVideoFilePath(outputPath);
         if (CollUtil.isEmpty(inputs)) {
@@ -888,6 +891,10 @@ public class FfmpegUtil {
                             String.format("[tmp%s][v%s] overlay=shortest=1:x=%s:y=%s ",
                                     i, i, info.getX(), info.getY())
             );
+        }
+        // 添加字幕文件
+        if (StrUtil.isNotBlank(subtitlePath) && FileUtil.exist(subtitlePath)) {
+            cmdBuilder.append(String.format(" ,subtitles='%s':force_style='fontfile=%s'", subtitlePath, FfmPegExecutor.getFont()));
         }
 
         // 音过滤, 指定音频源

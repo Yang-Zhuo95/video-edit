@@ -23,6 +23,8 @@ public class MultipleMergeFo {
     private Integer baseWidth;
     @ApiModelProperty("编辑后的视频高度")
     private Integer baseHeight;
+    @ApiModelProperty("字幕路径")
+    private String subtitlePath;
     @ApiModelProperty("音频源下标")
     private Integer audioIndex;
     @ApiModelProperty("输出路径")
