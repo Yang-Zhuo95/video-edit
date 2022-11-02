@@ -1,4 +1,4 @@
-package com.ulearning.video.config.dataSource;
+package com.ulearning.video.common.config.dataSource;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import io.shardingjdbc.core.api.config.MasterSlaveRuleConfiguration;

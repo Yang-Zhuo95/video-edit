@@ -172,10 +172,10 @@ public class ExceptionHandlerController extends DefaultHandlerExceptionResolver 
     /**
      * 用于抓取嵌套的类中字段验证信息（暂定）
      * 格式如："Validation failed for classes
-     * [com.ulearning.ulms.course.model.LabelModel]	 * during persist time for groups [javax.validation.groups.Default, ]\n
+     * [com.ulearning.video.course.model.LabelModel]	 * during persist time for groups [javax.validation.groups.Default, ]\n
      * List of constraint violations:[\n\tConstraintViolationImpl
      * {interpolatedMessage='标签名长度只能在2-20之间', propertyPath=name,
-     * rootBeanClass=class com.ulearning.ulms.course.model.LabelModel,
+     * rootBeanClass=class com.ulearning.video.course.model.LabelModel,
      * messageTemplate='标签名长度只能在2-20之间'}\n
      * @return
      * @Title: setchMessage

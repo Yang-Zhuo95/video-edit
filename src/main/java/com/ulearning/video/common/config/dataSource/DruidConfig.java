@@ -1,4 +1,4 @@
-package com.ulearning.video.config.dataSource;
+package com.ulearning.video.common.config.dataSource;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.wall.WallConfig;
@@ -35,7 +35,7 @@ public class DruidConfig {
     private ShardingMasterSlaveConfig shardingMasterSlaveConfig;
 
     // 精确到 master 目录，以便跟其他数据源隔离
-//    static final String PACKAGE = "com.ulearning.ulms.**.dao";
+//    static final String PACKAGE = "com.ulearning.video.**.dao";
     static final String MAPPER_LOCATION = "classpath:mapper/*.xml";
 
     @Value("${spring.datasource.driverClassName}")

@@ -1,4 +1,4 @@
-package com.ulearning.video.config.async;
+package com.ulearning.video.common.config.async;
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
 import org.springframework.context.annotation.Bean;

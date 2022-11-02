@@ -1,4 +1,4 @@
-package com.ulearning.video.config.okHttp;
+package com.ulearning.video.common.config.okHttp;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;

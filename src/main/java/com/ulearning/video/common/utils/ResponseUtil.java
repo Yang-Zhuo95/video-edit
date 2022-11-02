@@ -32,7 +32,7 @@ public class ResponseUtil {
      * @date 2022/8/11 11:18
      * @author yangzhuo
      */
-    public static void writeFileToResponse(File file, String contentType,String charset, HttpServletResponse resp) throws IOException {
+    public static void writeFileToResponse(File file, String contentType, String charset, HttpServletResponse resp) throws IOException {
         FileChannel sourceChannel = null;
         WritableByteChannel respChannel = null;
         try (RandomAccessFile sourceFile = new RandomAccessFile(file, "r")) {

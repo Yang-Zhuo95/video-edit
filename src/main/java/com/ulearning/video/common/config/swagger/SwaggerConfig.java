@@ -1,4 +1,4 @@
-package com.ulearning.video.common.swagger;
+package com.ulearning.video.common.config.swagger;
 
 import com.github.xiaoymin.swaggerbootstrapui.annotations.EnableSwaggerBootstrapUI;
 import com.google.common.base.Function;

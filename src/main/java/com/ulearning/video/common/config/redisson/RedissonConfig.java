@@ -1,4 +1,4 @@
-package com.ulearning.video.config.redisson;
+package com.ulearning.video.common.config.redisson;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
